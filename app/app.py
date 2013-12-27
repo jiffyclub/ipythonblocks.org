@@ -20,6 +20,9 @@ tornado.options.define('tornado_log_file',
 tornado.options.define('app_log_file',
                        default='/var/log/ipborg/app.log',
                        type=str)
+tornado.options.define('db_file',
+                       default='/var/ipborgdb/ipborg.db',
+                       type=str)
 tornado.options.parse_command_line()
 
 
