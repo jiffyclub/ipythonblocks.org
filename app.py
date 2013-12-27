@@ -6,6 +6,11 @@ import tornado.log
 import tornado.options
 import tornado.web
 
+from twiggy import log
+
+# local imports
+from twiggy_setup import twiggy_setup
+
 tornado.options.define('tornado_log_file',
                        default='/var/log/ipborg/tornado.log',
                        type=str)
@@ -13,8 +18,6 @@ tornado.options.define('app_log_file',
                        default='/var/log/ipborg/app.log',
                        type=str)
 tornado.options.parse_command_line()
-
-from twiggy_setup import twiggy_setup
 
 
 def configure_tornado_logging():
@@ -46,11 +49,16 @@ class MainHandler(tornado.web.RequestHandler):
 
 
 application = tornado.web.Application([
-    (r"/", MainHandler),
+    (r'/', MainHandler),
+    # (r'/about', AboutHandler),
+    # (r'/random', RandomHandler),
+    (r'/post', PostHandler),
+    # (r'/get/([a-zA-Z0-9]+)', GetGridSpecHandler),
+    # (r'/([a-zA-Z0-9]+)', RenderGridHandler)
 ], **settings)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     configure_tornado_logging()
     twiggy_setup()
 
