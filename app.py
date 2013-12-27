@@ -1,6 +1,8 @@
+import json
 import logging
 import os
 
+import jsonschema
 import tornado.ioloop
 import tornado.log
 import tornado.options
@@ -9,6 +11,7 @@ import tornado.web
 from twiggy import log
 
 # local imports
+import postvalidate
 from twiggy_setup import twiggy_setup
 
 tornado.options.define('tornado_log_file',
@@ -46,6 +49,21 @@ settings = {
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
         self.write('{}'.format(os.environ.get('MC_PORT')))
+
+
+class PostHandler(tornado.web.RequestHandler):
+    def post(self):
+        try:
+            req_data = json.loads(self.request.body)
+        except ValueError:
+            log.debug('Unable to load request JSON.')
+            raise tornado.web.HTTPError(400, 'Unable to load request JSON.')
+
+        try:
+            jsonschema.validate(req_data, postvalidate.schema)
+        except jsonschema.ValidationError:
+            log.debug('Post JSON validation failed.')
+            raise tornado.web.HTTPError(400, 'Post JSON validation failed.')
 
 
 application = tornado.web.Application([
