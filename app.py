@@ -6,14 +6,15 @@ import tornado.log
 import tornado.options
 import tornado.web
 
-
 tornado.options.define('tornado_log_file',
-                       default='/var/log/ipborg/torando.log',
+                       default='/var/log/ipborg/tornado.log',
                        type=str)
 tornado.options.define('app_log_file',
                        default='/var/log/ipborg/app.log',
                        type=str)
 tornado.options.parse_command_line()
+
+from twiggy_setup import twiggy_setup
 
 
 def configure_tornado_logging():
@@ -29,7 +30,6 @@ def configure_tornado_logging():
     logger.addHandler(fh)
 
     tornado.log.enable_pretty_logging(logger=logger)
-configure_tornado_logging()
 
 
 settings = {
@@ -51,5 +51,8 @@ application = tornado.web.Application([
 
 
 if __name__ == "__main__":
+    configure_tornado_logging()
+    twiggy_setup()
+
     application.listen(8888)
     tornado.ioloop.IOLoop.instance().start()
