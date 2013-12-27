@@ -11,8 +11,8 @@ import tornado.web
 from twiggy import log
 
 # local imports
-import postvalidate
-from twiggy_setup import twiggy_setup
+from . import postvalidate
+from .twiggy_setup import twiggy_setup
 
 tornado.options.define('tornado_log_file',
                        default='/var/log/ipborg/tornado.log',
