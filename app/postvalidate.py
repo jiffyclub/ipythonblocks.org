@@ -13,7 +13,7 @@ schema = {
         'ipb_version': {
             'description': 'Version of ipythonblocks from which post originated.',
             'type': 'string',
-            'pattern': r'\d+\.\d+\.\d+.*'
+            'pattern': r'\d+\.\d+(?:\.\d+)?.*'
         },
         'ipb_class': {
             'description': 'Grid class from which post originated.',
@@ -29,7 +29,7 @@ schema = {
             'description': 'Whether this post should be secret.',
             'type': 'boolean'
         },
-        'table_data': {
+        'grid_data': {
             'description': 'Spec of the grid itself.',
             'type': 'object',
             'properties': {
@@ -73,5 +73,5 @@ schema = {
         }
     },
     'required': ['python_version', 'ipb_version', 'ipb_class', 'code_cells',
-                 'secret', 'table_data']
+                 'secret', 'grid_data']
 }

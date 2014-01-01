@@ -11,6 +11,7 @@ import tornado.web
 from twiggy import log
 
 # local imports
+from . import dbinterface as dbi
 from . import postvalidate
 from .twiggy_setup import twiggy_setup
 
@@ -19,9 +20,6 @@ tornado.options.define('tornado_log_file',
                        type=str)
 tornado.options.define('app_log_file',
                        default='/var/log/ipborg/app.log',
-                       type=str)
-tornado.options.define('db_file',
-                       default='/var/ipborgdb/ipborg.db',
                        type=str)
 tornado.options.parse_command_line()
 
@@ -67,6 +65,17 @@ class PostHandler(tornado.web.RequestHandler):
         except jsonschema.ValidationError:
             log.debug('Post JSON validation failed.')
             raise tornado.web.HTTPError(400, 'Post JSON validation failed.')
+
+        grid_id = dbi.store_grid_entry(req_data)
+
+        if req_data['secret']:
+            url = 'http://ipythonblocks.org/secret/{}'
+        else:
+            url = 'http://ipythonblocks.org/{}'
+
+        url = url.format(grid_id)
+
+        self.write({'url': url})
 
 
 application = tornado.web.Application([
