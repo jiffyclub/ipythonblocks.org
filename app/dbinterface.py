@@ -181,16 +181,19 @@ def get_grid_entry(grid_id, secret=False):
     return grid_spec
 
 
-def get_random_grid_entry():
+def get_random_grid_id():
     """
-    Get a random, non-secret grid entry.
+    Get a random, non-secret grid id.
 
     Returns
     -------
-    grid_spec : dict
+    grid_id : str
 
     """
-    query = 'SELECT * FROM {} ORDER BY RANDOM() LIMIT 1'.format(PUBLIC_TABLE)
+    query = ('SELECT grid_id '
+             'FROM {} '
+             'ORDER BY RANDOM() '
+             'LIMIT 1').format(PUBLIC_TABLE)
     db = get_db()
     cursor = db.query(query)
-    return desqlize_grid_entry(tuple(cursor)[0])
+    return tuple(cursor)[0]['grid_id']

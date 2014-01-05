@@ -98,6 +98,6 @@ def test_get_random_grid_entry(basic_grid):
     grid_id = dbi.store_grid_entry(data)
     data['grid_id'] = grid_id
 
-    entry = dbi.get_random_grid_entry()
+    test_id = dbi.get_random_grid_id()
 
-    assert isinstance(entry, dict)
+    assert test_id == grid_id
