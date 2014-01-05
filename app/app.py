@@ -91,10 +91,16 @@ class GetGridSpecHandler(tornado.web.RequestHandler):
         self.write(grid_spec['grid_data'])
 
 
+class RandomHandler(tornado.web.RequestHandler):
+    def get(self):
+        grid_id = dbi.get_random_grid_id()
+        self.redirect('/' + grid_id, status=303)
+
+
 application = tornado.web.Application([
     (r'/', MainHandler),
     # (r'/about', AboutHandler),
-    # (r'/random', RandomHandler),
+    (r'/random', RandomHandler),
     (r'/post', PostHandler),
     (r'/get/([a-z0-9]+)', GetGridSpecHandler),
     # (r'/([a-z0-9]+)', RenderGridHandler, {'secret': False}),

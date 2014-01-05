@@ -57,6 +57,12 @@ class UtilBase(tornado.testing.AsyncHTTPTestCase):
             method=self.method, body=body)
         return self.wait()
 
+    def save_grid(self, secret):
+        req = request()
+        req['secret'] = secret
+        grid_id = dbi.store_grid_entry(req)
+        return grid_id
+
 
 class TestPostGrid(UtilBase):
     app_url = '/post'
@@ -115,12 +121,6 @@ class TestGetGrid(UtilBase):
         response = self.get_response()
         assert response.code == 404
 
-    def save_grid(self, secret):
-        req = request()
-        req['secret'] = secret
-        grid_id = dbi.store_grid_entry(req)
-        return grid_id
-
     def test_get_grid(self):
         grid_id = self.save_grid(False)
         self.app_url = '/get/{}'.format(grid_id)
@@ -144,3 +144,16 @@ class TestGetGrid(UtilBase):
         req = request()
 
         assert body == json.loads(json.dumps(req['grid_data']))
+
+
+class TestRandomHandler(UtilBase):
+    def test_random(self):
+        grid_id = self.save_grid(False)
+
+        self.http_client.fetch(
+            self.get_url('/random'), self.stop,
+            method='GET', follow_redirects=False)
+        response = self.wait()
+
+        assert response.code == 303
+        assert response.headers['Location'] == '/{}'.format(grid_id)
