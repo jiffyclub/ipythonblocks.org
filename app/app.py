@@ -78,13 +78,27 @@ class PostHandler(tornado.web.RequestHandler):
         self.write({'url': url})
 
 
+class GetGridSpecHandler(tornado.web.RequestHandler):
+    def get(self, grid_id):
+        grid_spec = dbi.get_grid_entry(grid_id)
+        if not grid_spec:
+            # see if it's a secret grid
+            grid_spec = dbi.get_grid_entry(grid_id, secret=True)
+
+            if not grid_spec:
+                raise tornado.web.HTTPError(404, 'Grid not found.')
+
+        self.write(grid_spec['grid_data'])
+
+
 application = tornado.web.Application([
     (r'/', MainHandler),
     # (r'/about', AboutHandler),
     # (r'/random', RandomHandler),
     (r'/post', PostHandler),
-    # (r'/get/([a-zA-Z0-9]+)', GetGridSpecHandler),
-    # (r'/([a-zA-Z0-9]+)', RenderGridHandler)
+    (r'/get/([a-z0-9]+)', GetGridSpecHandler),
+    # (r'/([a-z0-9]+)', RenderGridHandler, {'secret': False}),
+    # (r'/secret/([a-z0-9]+)', RenderGridHandler, {'secret': True})
 ], **settings)
 
 

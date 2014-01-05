@@ -41,7 +41,7 @@ def request():
     }
 
 
-class TestPostGrid(tornado.testing.AsyncHTTPTestCase):
+class UtilBase(tornado.testing.AsyncHTTPTestCase):
     def setup_method(self, method):
         _, tornado.options.options.db_file = tempfile.mkstemp()
 
@@ -51,10 +51,16 @@ class TestPostGrid(tornado.testing.AsyncHTTPTestCase):
     def get_app(self):
         return app.application
 
-    def get_response(self, body):
+    def get_response(self, body=None):
         self.http_client.fetch(
-            self.get_url('/post'), self.stop, method='POST', body=body)
+            self.get_url(self.app_url), self.stop,
+            method=self.method, body=body)
         return self.wait()
+
+
+class TestPostGrid(UtilBase):
+    app_url = '/post'
+    method = 'POST'
 
     def test_json_failure(self):
         response = self.get_response('{"asdf"}')
@@ -99,3 +105,42 @@ class TestPostGrid(tornado.testing.AsyncHTTPTestCase):
         req['grid_id'] = grid_id
         del grid_spec['id']
         assert grid_spec == json.loads(json.dumps(req))
+
+
+class TestGetGrid(UtilBase):
+    method = 'GET'
+
+    def test_returns_404(self):
+        self.app_url = '/get/asdf'
+        response = self.get_response()
+        assert response.code == 404
+
+    def save_grid(self, secret):
+        req = request()
+        req['secret'] = secret
+        grid_id = dbi.store_grid_entry(req)
+        return grid_id
+
+    def test_get_grid(self):
+        grid_id = self.save_grid(False)
+        self.app_url = '/get/{}'.format(grid_id)
+
+        response = self.get_response()
+        assert response.code == 200
+
+        body = json.loads(response.body)
+        req = request()
+
+        assert body == json.loads(json.dumps(req['grid_data']))
+
+    def test_get_grid_secret(self):
+        grid_id = self.save_grid(True)
+        self.app_url = '/get/{}'.format(grid_id)
+
+        response = self.get_response()
+        assert response.code == 200
+
+        body = json.loads(response.body)
+        req = request()
+
+        assert body == json.loads(json.dumps(req['grid_data']))
