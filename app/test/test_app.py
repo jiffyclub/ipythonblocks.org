@@ -30,7 +30,7 @@ def request():
         'python_version': (2, 7, 6, 'final', 0),
         'ipb_version': '1.6',
         'ipb_class': 'BlockGrid',
-        'code_cells': None,
+        'code_cells': ['asdf', 'jkl;'],
         'secret': False,
         'grid_data': {
             'lines_on': True,
@@ -157,3 +157,25 @@ class TestRandomHandler(UtilBase):
 
         assert response.code == 303
         assert response.headers['Location'] == '/{}'.format(grid_id)
+
+
+class TestRenderGrid(UtilBase):
+    method = 'GET'
+
+    def test_render(self):
+        grid_id = self.save_grid(False)
+        self.app_url = '/{}'.format(grid_id)
+
+        response = self.get_response()
+        assert response.code == 200
+        assert '<table' in response.body
+        assert 'asdf' in response.body
+
+    def test_render_secret(self):
+        grid_id = self.save_grid(True)
+        self.app_url = '/secret/{}'.format(grid_id)
+
+        response = self.get_response()
+        assert response.code == 200
+        assert '<table' in response.body
+        assert 'asdf' in response.body

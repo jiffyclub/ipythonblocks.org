@@ -181,6 +181,28 @@ def get_grid_entry(grid_id, secret=False):
     return grid_spec
 
 
+def get_grid_maybe_secret(grid_id):
+    """
+    Try to get a grid spec from the public table and if that doesn't
+    work try the secret table.
+
+    Parameters
+    ----------
+    grid_id : str
+
+    Returns
+    -------
+    grid_spec : dict
+        Will be None if no matching grid was found.
+
+    """
+    grid_spec = get_grid_entry(grid_id)
+    if not grid_spec:
+        # see if it's a secret grid
+        grid_spec = get_grid_entry(grid_id, secret=True)
+    return grid_spec
+
+
 def get_random_grid_id():
     """
     Get a random, non-secret grid id.

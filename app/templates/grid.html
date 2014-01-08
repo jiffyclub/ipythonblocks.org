@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+{% raw grid_html %}
+{% for cc in code_cells %}
+  <p class="ipb-codeblock">{{cc}}</p>
+{% end %}
+{% end %}

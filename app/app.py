@@ -8,6 +8,7 @@ import tornado.log
 import tornado.options
 import tornado.web
 
+from ipythonblocks import BlockGrid
 from twiggy import log
 
 # local imports
@@ -49,7 +50,8 @@ settings = {
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.write('{}'.format(os.environ.get('MC_PORT')))
+        # self.write('{}'.format(os.environ.get('MC_PORT')))
+        self.render('base.html')
 
 
 class PostHandler(tornado.web.RequestHandler):
@@ -80,13 +82,9 @@ class PostHandler(tornado.web.RequestHandler):
 
 class GetGridSpecHandler(tornado.web.RequestHandler):
     def get(self, grid_id):
-        grid_spec = dbi.get_grid_entry(grid_id)
+        grid_spec = dbi.get_grid_maybe_secret(grid_id)
         if not grid_spec:
-            # see if it's a secret grid
-            grid_spec = dbi.get_grid_entry(grid_id, secret=True)
-
-            if not grid_spec:
-                raise tornado.web.HTTPError(404, 'Grid not found.')
+            raise tornado.web.HTTPError(404, 'Grid not found.')
 
         self.write(grid_spec['grid_data'])
 
@@ -97,14 +95,34 @@ class RandomHandler(tornado.web.RequestHandler):
         self.redirect('/' + grid_id, status=303)
 
 
+class RenderGridHandler(tornado.web.RequestHandler):
+    def initialize(self, secret):
+        self.secret = secret
+
+    @tornado.web.removeslash
+    def get(self, grid_id):
+        grid_spec = dbi.get_grid_entry(grid_id, secret=self.secret)
+        if not grid_spec:
+            self.send_error(404)
+
+        gd = grid_spec['grid_data']
+        grid = BlockGrid(gd['width'], gd['height'], lines_on=gd['lines_on'])
+        grid._load_simple_grid(gd['blocks'])
+        grid_html = grid._repr_html_()
+
+        code_cells = grid_spec['code_cells'] or []
+
+        self.render('grid.html', grid_html=grid_html, code_cells=code_cells)
+
+
 application = tornado.web.Application([
     (r'/', MainHandler),
     # (r'/about', AboutHandler),
     (r'/random', RandomHandler),
     (r'/post', PostHandler),
     (r'/get/([a-z0-9]+)', GetGridSpecHandler),
-    # (r'/([a-z0-9]+)', RenderGridHandler, {'secret': False}),
-    # (r'/secret/([a-z0-9]+)', RenderGridHandler, {'secret': True})
+    (r'/([a-z0-9]+)/*', RenderGridHandler, {'secret': False}),
+    (r'/secret/([a-z0-9]+)/*', RenderGridHandler, {'secret': True})
 ], **settings)
 
 
