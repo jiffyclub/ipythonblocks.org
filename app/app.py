@@ -14,6 +14,7 @@ from twiggy import log
 # local imports
 from . import dbinterface as dbi
 from . import postvalidate
+from .colorize import colorize
 from .twiggy_setup import twiggy_setup
 
 tornado.options.define('tornado_log_file',
@@ -111,6 +112,7 @@ class RenderGridHandler(tornado.web.RequestHandler):
         grid_html = grid._repr_html_()
 
         code_cells = grid_spec['code_cells'] or []
+        code_cells = [colorize(c) for c in code_cells]
 
         self.render('grid.html', grid_html=grid_html, code_cells=code_cells)
 
@@ -130,5 +132,5 @@ if __name__ == '__main__':
     configure_tornado_logging()
     twiggy_setup()
 
-    application.listen(8888)
+    application.listen(8877)
     tornado.ioloop.IOLoop.instance().start()
