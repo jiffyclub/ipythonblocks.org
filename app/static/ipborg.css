@@ -2,12 +2,18 @@ body {
     font-family: 'Source Sans Pro', sans-serif;
     font-weight: 400;
     color: #333;
+    margin: 0;
+}
+
+.ipb-container {
+    border-top: 10px solid #1ED7FC;
+    border-bottom: 10px solid #1ED7FC;
+    padding: 10px 0;
 }
 
 .ipb-navbar {
     width: 100%;
     text-align: center;
-    margin-top: 20px;
 }
 
 .ipb-nav-item {
@@ -23,7 +29,8 @@ body {
     text-decoration: none;
 }
 
-.ipb-nav-link:hover {
+.ipb-nav-link:hover,
+.ipb-nav-link:focus {
     color: #1ED7FC;
 }
 

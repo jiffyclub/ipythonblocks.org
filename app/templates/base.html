@@ -21,19 +21,21 @@
     <![endif]-->
   </head>
   <body>
-    <div class="ipb-navbar">
-      <span class="ipb-nav-item">
-        <a class="ipb-nav-link" href="/">Home</a>
-      </span>
-      &#8862;
-      <span class="ipb-nav-item">
-        <a class="ipb-nav-link" href="/about">About</a>
-      </span>
-      &#8862;
-      <span class="ipb-nav-item">
-        <a class="ipb-nav-link" href="/random">Random</a>
-      </span>
+    <div class="ipb-container">
+      <div class="ipb-navbar">
+        <span class="ipb-nav-item">
+          <a class="ipb-nav-link" href="/">Home</a>
+        </span>
+        &#8862;
+        <span class="ipb-nav-item">
+          <a class="ipb-nav-link" href="/about">About</a>
+        </span>
+        &#8862;
+        <span class="ipb-nav-item">
+          <a class="ipb-nav-link" href="/random">Random</a>
+        </span>
+      </div>
+      {% block content %}{% end %}
     </div>
-    {% block content %}{% end %}
   </body>
 </html>
