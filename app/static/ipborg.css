@@ -8,7 +8,6 @@ body {
 @media (max-width: 768px) {
     .ipb-container {
         border-top: 10px solid #1ED7FC;
-        border-bottom: 10px solid #1ED7FC;
         padding: 10px 5px;
     }
 }
@@ -16,7 +15,6 @@ body {
 @media (min-width: 769px) {
     .ipb-container {
         border-top: 10px solid #1ED7FC;
-        border-bottom: 10px solid #1ED7FC;
         padding: 10px 50px;
     }
 }
@@ -47,10 +45,11 @@ body {
 .ipb-grid {
     width: 100%;
     text-align: center;
+    margin: 10px 0;
 }
 
 table.blockgrid {
-    margin: 20px auto;
+    margin: 0 auto;
     border-spacing: 0;
     border-collapse: collapse;
 }
