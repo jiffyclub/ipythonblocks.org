@@ -68,6 +68,7 @@ def encode_grid_id(grid_id, secret):
 def decode_hash_id(hash_id, secret):
     """
     Turn a hash ID from a URL into an integer grid ID for database lookup.
+    Returns None if the decryption was unsuccesful (e.g. not a valid Hashid).
 
     Parameters
     ----------
@@ -80,7 +81,9 @@ def decode_hash_id(hash_id, secret):
 
     """
     hashids = get_hashids(secret)
-    return hashids.decrypt(hash_id)[0]
+    dec = hashids.decrypt(hash_id)
+    if dec:
+        return dec[0]
 
 
 def get_db():
@@ -200,6 +203,11 @@ def get_grid_entry(hash_id, secret=False):
     """
     grid_id = decode_hash_id(hash_id, secret)
     llog = log.fields(grid_id=grid_id, hash_id=hash_id, secret=secret)
+    if not grid_id:
+        # couldn't do the conversion from hash to database ID
+        llog.debug('cannot decrypt hash')
+        return
+
     llog.debug('looking for grid')
 
     mc = get_memcached()
@@ -219,6 +227,7 @@ def get_grid_entry(hash_id, secret=False):
 
     else:
         llog.debug('grid not found')
+        return
 
     return grid_spec
 

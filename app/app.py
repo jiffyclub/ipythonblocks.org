@@ -108,6 +108,7 @@ class RenderGridHandler(tornado.web.RequestHandler):
         grid_spec = dbi.get_grid_entry(hash_id, secret=self.secret)
         if not grid_spec:
             self.send_error(404)
+            return
 
         gd = grid_spec['grid_data']
         grid = BlockGrid(gd['width'], gd['height'], lines_on=gd['lines_on'])
