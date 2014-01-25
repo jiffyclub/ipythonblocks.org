@@ -208,6 +208,7 @@ def get_grid_entry(hash_id, secret=False):
         llog.debug('pulling grid from memcached')
         return mc[mc_key]
 
+    llog.debug('pulling grid from database')
     table = get_table(secret)
     grid_spec = table.find_one(id=grid_id)
 
