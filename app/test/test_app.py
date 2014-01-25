@@ -12,6 +12,11 @@ from .. import app
 from .. import dbinterface as dbi
 
 
+def setup_module(module):
+    tornado.options.options.public_salt = 'public'
+    tornado.options.options.secret_salt = 'secret'
+
+
 def setup_function(function):
     _, tornado.options.options.db_file = tempfile.mkstemp()
 
@@ -60,8 +65,8 @@ class UtilBase(tornado.testing.AsyncHTTPTestCase):
     def save_grid(self, secret):
         req = request()
         req['secret'] = secret
-        grid_id = dbi.store_grid_entry(req)
-        return grid_id
+        hash_id = dbi.store_grid_entry(req)
+        return hash_id
 
 
 class TestPostGrid(UtilBase):
@@ -76,8 +81,7 @@ class TestPostGrid(UtilBase):
         response = self.get_response('{"asdf": 5}')
         assert response.code == 400
 
-    @mock.patch.object(dbi, 'make_grid_id', return_value='test_id')
-    def test_returns_url(self, id_mock):
+    def test_returns_url(self):
         req = request()
         response = self.get_response(json.dumps(req))
 
@@ -85,10 +89,9 @@ class TestPostGrid(UtilBase):
         assert 'application/json' in response.headers['Content-Type']
 
         body = json.loads(response.body)
-        assert body['url'] == 'http://ipythonblocks.org/test_id'
+        assert body['url'] == 'http://ipythonblocks.org/bizkiL'
 
-    @mock.patch.object(dbi, 'make_grid_id', return_value='test_id')
-    def test_returns_url_secret(self, id_mock):
+    def test_returns_url_secret(self):
         req = request()
         req['secret'] = True
         response = self.get_response(json.dumps(req))
@@ -97,7 +100,7 @@ class TestPostGrid(UtilBase):
         assert 'application/json' in response.headers['Content-Type']
 
         body = json.loads(response.body)
-        assert body['url'] == 'http://ipythonblocks.org/secret/test_id'
+        assert body['url'] == 'http://ipythonblocks.org/secret/MiXoi4'
 
     def test_stores_data(self):
         req = request()
@@ -106,9 +109,8 @@ class TestPostGrid(UtilBase):
         assert response.code == 200
 
         body = json.loads(response.body)
-        grid_id = body['url'].split('/')[-1]
-        grid_spec = dbi.get_grid_entry(grid_id)
-        req['grid_id'] = grid_id
+        hash_id = body['url'].split('/')[-1]
+        grid_spec = dbi.get_grid_entry(hash_id)
         del grid_spec['id']
         assert grid_spec == json.loads(json.dumps(req))
 
@@ -135,7 +137,7 @@ class TestGetGrid(UtilBase):
 
     def test_get_grid_secret(self):
         grid_id = self.save_grid(True)
-        self.app_url = '/get/{}'.format(grid_id)
+        self.app_url = '/get/secret/{}'.format(grid_id)
 
         response = self.get_response()
         assert response.code == 200
@@ -163,8 +165,8 @@ class TestRenderGrid(UtilBase):
     method = 'GET'
 
     def test_render(self):
-        grid_id = self.save_grid(False)
-        self.app_url = '/{}'.format(grid_id)
+        hash_id = self.save_grid(False)
+        self.app_url = '/{}'.format(hash_id)
 
         response = self.get_response()
         assert response.code == 200
@@ -172,8 +174,8 @@ class TestRenderGrid(UtilBase):
         assert 'asdf' in response.body
 
     def test_render_secret(self):
-        grid_id = self.save_grid(True)
-        self.app_url = '/secret/{}'.format(grid_id)
+        hash_id = self.save_grid(True)
+        self.app_url = '/secret/{}'.format(hash_id)
 
         response = self.get_response()
         assert response.code == 200

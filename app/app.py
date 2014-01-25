@@ -69,21 +69,24 @@ class PostHandler(tornado.web.RequestHandler):
             log.debug('Post JSON validation failed.')
             raise tornado.web.HTTPError(400, 'Post JSON validation failed.')
 
-        grid_id = dbi.store_grid_entry(req_data)
+        hash_id = dbi.store_grid_entry(req_data)
 
         if req_data['secret']:
             url = 'http://ipythonblocks.org/secret/{}'
         else:
             url = 'http://ipythonblocks.org/{}'
 
-        url = url.format(grid_id)
+        url = url.format(hash_id)
 
         self.write({'url': url})
 
 
 class GetGridSpecHandler(tornado.web.RequestHandler):
-    def get(self, grid_id):
-        grid_spec = dbi.get_grid_maybe_secret(grid_id)
+    def initialize(self, secret):
+        self.secret = secret
+
+    def get(self, hash_id):
+        grid_spec = dbi.get_grid_entry(hash_id, self.secret)
         if not grid_spec:
             raise tornado.web.HTTPError(404, 'Grid not found.')
 
@@ -92,8 +95,8 @@ class GetGridSpecHandler(tornado.web.RequestHandler):
 
 class RandomHandler(tornado.web.RequestHandler):
     def get(self):
-        grid_id = dbi.get_random_grid_id()
-        self.redirect('/' + grid_id, status=303)
+        hash_id = dbi.get_random_hash_id()
+        self.redirect('/' + hash_id, status=303)
 
 
 class RenderGridHandler(tornado.web.RequestHandler):
@@ -101,8 +104,8 @@ class RenderGridHandler(tornado.web.RequestHandler):
         self.secret = secret
 
     @tornado.web.removeslash
-    def get(self, grid_id):
-        grid_spec = dbi.get_grid_entry(grid_id, secret=self.secret)
+    def get(self, hash_id):
+        grid_spec = dbi.get_grid_entry(hash_id, secret=self.secret)
         if not grid_spec:
             self.send_error(404)
 
@@ -122,9 +125,10 @@ application = tornado.web.Application([
     # (r'/about', AboutHandler),
     (r'/random', RandomHandler),
     (r'/post', PostHandler),
-    (r'/get/([a-z0-9]+)', GetGridSpecHandler),
-    (r'/([a-z0-9]+)/*', RenderGridHandler, {'secret': False}),
-    (r'/secret/([a-z0-9]+)/*', RenderGridHandler, {'secret': True})
+    (r'/get/(\w{6}\w*)', GetGridSpecHandler, {'secret': False}),
+    (r'/get/secret/(\w{6}\w*)', GetGridSpecHandler, {'secret': True}),
+    (r'/(\w{6}\w*)/*', RenderGridHandler, {'secret': False}),
+    (r'/secret/(\w{6}\w*)/*', RenderGridHandler, {'secret': True})
 ], **settings)
 
 
