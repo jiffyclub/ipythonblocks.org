@@ -1,8 +1,10 @@
 import datetime
 import json
+import os
 import random
 
 import dataset
+import pylibmc
 import tornado.options
 
 from hashids import Hashids
@@ -19,6 +21,11 @@ JSONIZE_KEYS = {'python_version', 'code_cells', 'grid_data'}
 PUBLIC_TABLE = 'public_grids'
 SECRET_TABLE = 'secret_grids'
 HASH_MIN_LENGTH = 6
+
+
+def get_memcached():
+    host = os.environ['MC_PORT']
+    return pylibmc.Client([host], binary=True)
 
 
 def get_hashids(secret):
@@ -195,12 +202,19 @@ def get_grid_entry(hash_id, secret=False):
     llog = log.fields(grid_id=grid_id, hash_id=hash_id, secret=secret)
     llog.debug('looking for grid')
 
+    mc = get_memcached()
+    mc_key = str((grid_id, secret))
+    if mc_key in mc:
+        llog.debug('pulling grid from memcached')
+        return mc[mc_key]
+
     table = get_table(secret)
     grid_spec = table.find_one(id=grid_id)
 
     if grid_spec:
         llog.debug('grid found')
         grid_spec = desqlize_grid_entry(grid_spec)
+        mc[mc_key] = grid_spec
 
     else:
         llog.debug('grid not found')

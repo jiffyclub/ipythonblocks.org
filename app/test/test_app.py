@@ -15,6 +15,11 @@ from .. import dbinterface as dbi
 def setup_module(module):
     tornado.options.options.public_salt = 'public'
     tornado.options.options.secret_salt = 'secret'
+    dbi.get_memcached().flush_all()
+
+
+def teardown_module(module):
+    dbi.get_memcached().flush_all()
 
 
 def setup_function(function):

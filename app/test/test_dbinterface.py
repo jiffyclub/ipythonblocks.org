@@ -28,6 +28,11 @@ def basic_grid(data_2x2):
 def setup_module(module):
     tornado.options.options.public_salt = 'public'
     tornado.options.options.secret_salt = 'secret'
+    dbi.get_memcached().flush_all()
+
+
+def teardown_module(module):
+    dbi.get_memcached().flush_all()
 
 
 def setup_function(function):
