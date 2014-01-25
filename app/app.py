@@ -49,10 +49,14 @@ settings = {
 }
 
 
-class MainHandler(tornado.web.RequestHandler):
-    def get(self):
-        # self.write('{}'.format(os.environ.get('MC_PORT')))
-        self.render('base.html')
+class MainHandler(tornado.web.StaticFileHandler):
+    def parse_url_path(self, url_path):
+        return 'main.html'
+
+
+class AboutHandler(tornado.web.StaticFileHandler):
+    def parse_url_path(self, url_path):
+        return 'about.html'
 
 
 class PostHandler(tornado.web.RequestHandler):
@@ -122,8 +126,8 @@ class RenderGridHandler(tornado.web.RequestHandler):
 
 
 application = tornado.web.Application([
-    (r'/', MainHandler),
-    # (r'/about', AboutHandler),
+    (r'/()', MainHandler, {'path': settings['template_path']}),
+    (r'/(about)', AboutHandler, {'path': settings['template_path']}),
     (r'/random', RandomHandler),
     (r'/post', PostHandler),
     (r'/get/(\w{6}\w*)', GetGridSpecHandler, {'secret': False}),
