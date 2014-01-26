@@ -1,8 +1,28 @@
-body {
+body,
+.pure-g [class *= "pure-u"],
+.pure-g-r [class *= "pure-u"] {
     font-family: 'Source Sans Pro', sans-serif;
+}
+
+body {
     font-weight: 400;
     color: #333;
     margin: 0;
+}
+
+a {
+    color: #3498db;
+    text-decoration: none;
+}
+
+a:hover,
+a:focus {
+    color: #1ED7FC;
+    text-decoration: none;
+}
+
+code {
+    font-family: 'Source Code Pro', monospace;
 }
 
 @media (max-width: 768px) {
@@ -10,12 +30,26 @@ body {
         border-top: 10px solid #1ED7FC;
         padding: 10px 5px;
     }
+
+    .ipb-lede-text {
+        font-family: 'Source Code Pro', monospace;
+        font-weight: 200;
+        font-size: 30px;
+        text-align: center;
+    }
 }
 
 @media (min-width: 769px) {
     .ipb-container {
         border-top: 10px solid #1ED7FC;
         padding: 10px 50px;
+    }
+
+    .ipb-lede-text {
+        font-family: 'Source Code Pro', monospace;
+        font-weight: 200;
+        font-size: 40px;
+        text-align: center;
     }
 }
 
@@ -63,4 +97,18 @@ table.blockgrid {
     background: #f8f8f8;
     min-width: -webkit-fit-content;
     min-width: -moz-fit-content;
+}
+
+.ipb-main-sections {
+    text-align: center;
+}
+
+.ipb-main-section-header {
+    font-weight: 200;
+    font-size: 20px;
+}
+
+.ipb-main-section-text {
+    text-align: justify;
+    padding: 0 10px;
 }
