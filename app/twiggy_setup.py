@@ -8,5 +8,5 @@ def twiggy_setup():
     sout = outputs.StreamOutput(format=formats.line_format)
 
     addEmitters(
-        ('ipborg', levels.DEBUG, None, fout),
-        ('ipborg', levels.DEBUG, None, sout))
+        ('ipborg.file', levels.DEBUG, None, fout),
+        ('ipborg.std', levels.DEBUG, None, sout))
