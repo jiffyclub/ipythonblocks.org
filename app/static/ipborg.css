@@ -6,6 +6,7 @@ body,
 
 body {
     font-weight: 400;
+    font-size: 16px;
     color: #333;
     margin: 0;
 }
@@ -105,10 +106,27 @@ table.blockgrid {
 
 .ipb-main-section-header {
     font-weight: 200;
-    font-size: 20px;
+    font-size: 25px;
 }
 
 .ipb-main-section-text {
     text-align: justify;
     padding: 0 10px;
+}
+
+.ipb-about-section {
+    border: 1px solid #1abc9c;
+    border-radius: 5px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.ipb-about-header {
+    font-weight: bold;
+    font-size: 20px;
+    margin-top: 0;
+}
+
+.ipb-about-text {
+    margin-left: 10px;
 }

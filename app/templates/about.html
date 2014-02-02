@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400'
+          rel='stylesheet'
+          type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:200,400'
+          rel='stylesheet'
+          type='text/css'>
+    <meta charset="utf-8">
+    <title>ipythonblocks: about</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="/static/ipborg.css" rel="stylesheet">
+    <link href="/static/pygments.css" rel="stylesheet">
+    <link rel="shortcut icon" href="/static/favicon.ico">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements. -->
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="ipb-container">
+      <div class="ipb-navbar">
+        &#8862;
+        <span class="ipb-nav-item">
+          <a class="ipb-nav-link" href="/">Home</a>
+        </span>
+        &#8862;
+        <span class="ipb-nav-item">
+          <a class="ipb-nav-link" href="/about">About</a>
+        </span>
+        &#8862;
+        <span class="ipb-nav-item">
+          <a class="ipb-nav-link" href="/random">Random</a>
+        </span>
+        &#8862;
+      </div>
+
+      <div class="ipb-about-section">
+        <p class="ipb-about-header">
+          General Information
+        </p>
+        <p class="ipb-about-text">
+          ipythonblocks and ipythonblocks.org are made by
+          <a href="http://pendandpants.com">Matt Davis</a>.
+          ipythonblocks can be found
+          <a href="https://github.com/jiffyclub/ipythonblocks">on GitHub</a>.
+          ipythonblocks.org is generously hosted by
+          <a href="http://www.rackspace.com/">Rackspace</a>.
+        </p>
+      </div>
+      <div class="ipb-about-section">
+        <p class="ipb-about-header">
+          What is ipythonblocks?
+        </p>
+        <p class="ipb-about-text">
+          ipythonblocks works in the
+          <a href="http://ipython.org/notebook.html">IPython Notebook</a>
+          to give students a grid of colored blocks they can manipulate
+          with Python. It's a great way for students to practice flow
+          control and other aspects of programming with immediate, visual
+          feedback on what their code is doing. It can even animate
+          loops to show students what has changed at every step!
+        </p>
+        <p class="ipb-about-text">
+          The best way to learn about ipythonblocks is to check out some
+          of the example Notebooks:
+          <ul>
+            <li><a href="http://nbviewer.ipython.org/urls/raw.github.com/jiffyclub/ipythonblocks/master/demos/ipythonblocks_demo.ipynb">
+              Basic Usage
+            </a></li>
+            <li><a href="http://nbviewer.ipython.org/urls/raw.github.com/jiffyclub/ipythonblocks/master/demos/ipythonblocks_fun.ipynb">
+              Fun Examples
+            </a></li>
+            <li><a href="http://nbviewer.ipython.org/urls/raw.github.com/jiffyclub/ipythonblocks/master/demos/ipythonblocks_animation.ipynb">
+              Animation Examples
+            </a></li>
+            <li><a href="http://nbviewer.ipython.org/urls/raw.github.com/jiffyclub/ipythonblocks/master/demos/ipythonblocks_imagegrid.ipynb">
+              ImageGrid Examples
+            </a></li>
+            <li><a href="http://nbviewer.ipython.org/urls/raw.github.com/jiffyclub/ipythonblocks/master/demos/starry_night_to_text.ipynb">
+              Converting a JPEG to ipythonblocks
+            </a></li>
+            <li><a href="http://nbviewer.ipython.org/urls/raw.github.com/jiffyclub/ipythonblocks/master/demos/Firework.ipynb">
+              A programatic firework animation
+            </a></li>
+          </ul>
+        </p>
+      </div>
+      <div class="ipb-about-section">
+        <p class="ipb-about-header">
+          What is ipythonblocks.org?
+        </p>
+        <p class="ipb-about-text">
+          ipythonblocks.org is a site where people can share the grids
+          they create, and find starting points for their own exploration.
+        </p>
+      </div>
+      <div class="ipb-about-section" id="how-to-post">
+        <p class="ipb-about-header">
+          How do I post to ipythonblocks.org?
+        </p>
+        <p class="ipb-about-text">
+          Once you've made something you want to share, use the
+          <code>.post_to_web()</code> method to send it to ipythonblocks.org.
+          You'll get back a URL you can share with your friends so they
+          can see what you've been up to.
+        </p>
+        <p class="ipb-about-text">
+          When you post a grid you can select IPython code cells to send
+          so that others can see how you actually made your beautiful grid.
+          And if you don't want your post shown to people clicking the
+          &ldquo;Random&rdquo; link, you can specify that we keep it secret.
+        </p>
+      </div>
+      <div class="ipb-about-section">
+        <p class="ipb-about-header">
+          How do I use a grid from ipythonblocks.org?
+        </p>
+        <p class="ipb-about-text">
+          If you find something you like on ipythonblocks.org you can use
+          it as a starting point for your own work.
+          Use the <code>BlockGrid.from_web()</code> or
+          <code>ImageGrid.from_web()</code> class methods to load the
+          grid into the IPython Notebook for your own use.
+        </p>
+        <p class="ipb-about-text">
+          You specify a grid to <code>.from_web()</code> by passing in a
+          &ldquo;grid ID&rdquo;. This is the short, random looking string
+          of letters and numbers you see at the end of the URL when you
+          are looking at a grid on ipythonblocks.org.
+          For example, the &ldquo;zzzzzz&rdquo; in
+          &ldquo;http://ipythonblocks.org/zzzzzz&rdquo;.
+        </p>
+      </div>
+      <div class="ipb-about-section">
+        <p class="ipb-about-header">
+          What is a &ldquo;secret&rdquo; grid?
+        </p>
+        <p class="ipb-about-text">
+          Secret grids are public like everything on ipythonblocks.org,
+          but they will not be searchable or be shown to users looking
+          at random grids.
+        </p>
+      </div>
+      <div class="ipb-about-section">
+        <p class="ipb-about-header">
+          How can I give feedback, contribute, or report bugs?
+        </p>
+        <p class="ipb-about-text">
+          <a href="https://github.com/jiffyclub/ipythonblocks">ipythonblocks</a>
+          is developed on GitHub, which is a great place to make feature
+          requests or report bugs. If you don't have a GitHub account you
+          can email <a href="mailto:jiffyclub@gmail.com">Matt</a>.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
