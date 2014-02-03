@@ -24,7 +24,8 @@ HASH_MIN_LENGTH = 6
 
 
 def get_memcached():
-    host = os.environ['MC_PORT']
+    host = os.environ.get('MC_PORT', '127.0.0.1').replace('tcp://', '')
+    log.fields(mc_host=host).debug('connecting to memcached')
     return pylibmc.Client([host], binary=True)
 
 
