@@ -12,6 +12,7 @@ Python requirements:
 - [jsonschema][]
 - [pygments][]
 - [pylibmc][]
+- [tornado][]
 - [twiggy][]
 
 Other requirements:
@@ -26,5 +27,6 @@ Other requirements:
 [jsonschema]: http://python-jsonschema.readthedocs.org/en/latest/
 [pygments]: http://pygments.org/
 [pylibmc]: http://sendapatch.se/projects/pylibmc/
+[tornado]: http://www.tornadoweb.org/en/stable/
 [twiggy]: https://twiggy.readthedocs.org/en/latest/
 [memcached]: http://memcached.org/
