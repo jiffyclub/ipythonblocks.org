@@ -103,7 +103,18 @@ class RandomHandler(tornado.web.RequestHandler):
         self.redirect('/' + hash_id, status=303)
 
 
-class RenderGridHandler(tornado.web.RequestHandler):
+class ErrorHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.send_error(404)
+
+    def write_error(self, status_code, **kwargs):
+        if status_code == 404:
+            self.render('404.html')
+        else:
+            super(ErrorHandler, self).send_error(status_code, **kwargs)
+
+
+class RenderGridHandler(ErrorHandler):
     def initialize(self, secret):
         self.secret = secret
 
@@ -133,7 +144,8 @@ application = tornado.web.Application([
     (r'/get/(\w{6}\w*)', GetGridSpecHandler, {'secret': False}),
     (r'/get/secret/(\w{6}\w*)', GetGridSpecHandler, {'secret': True}),
     (r'/(\w{6}\w*)/*', RenderGridHandler, {'secret': False}),
-    (r'/secret/(\w{6}\w*)/*', RenderGridHandler, {'secret': True})
+    (r'/secret/(\w{6}\w*)/*', RenderGridHandler, {'secret': True}),
+    (r'/.*', ErrorHandler)
 ], **settings)
 
 
