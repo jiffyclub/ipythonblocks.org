@@ -90,7 +90,6 @@ table.blockgrid {
 }
 
 .ipb-codeblock {
-    font-family: 'Source Code Pro', monospace;
     border-radius: 10px;
     border: 1px solid #f5f5f5;
     padding: 0 20px;
@@ -98,6 +97,10 @@ table.blockgrid {
     background: #f5f5f5;
     min-width: -webkit-fit-content;
     min-width: -moz-fit-content;
+}
+
+.ipb-codeblock pre {
+    font-family: 'Source Code Pro', monospace;
 }
 
 .ipb-main-sections {
