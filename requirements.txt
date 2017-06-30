@@ -1,0 +1,9 @@
+hashids==1.2.0
+ipython==6.1.0
+ipythonblocks==1.7.0
+jsonschema==2.6.0
+psycopg2==2.7.1
+pygments==2.2.0
+sqlalchemy==1.1.11
+tornado==4.5.1
+twiggy==0.4.7
