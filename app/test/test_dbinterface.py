@@ -3,20 +3,49 @@ import json
 import tempfile
 import os
 
-import dataset
 import ipythonblocks as ipb
-import tornado.options
-
-import mock
 import pytest
+import sqlalchemy as sa
+import testing.postgresql
+from sqlalchemy.orm import sessionmaker
 
 from .. import dbinterface as dbi
+from .. import models
+
+
+@pytest.fixture(scope='module')
+def pg_engine():
+    with testing.postgresql.Postgresql() as postgresql:
+        engine = sa.create_engine(postgresql.url())
+        models.Base.metadata.create_all(bind=engine)
+
+        yield engine
+
+        engine.dispose()
+
+
+@pytest.fixture
+def session(pg_engine):
+    conn = pg_engine.connect()
+    transaction = conn.begin()
+
+    Session = sessionmaker(bind=conn)
+    session = Session()
+
+    yield session
+
+    session.rollback()
+    session.close()
+    Session.close_all()
+    transaction.rollback()
+    conn.close()
 
 
 @pytest.fixture
 def data_2x2():
     return [[(1, 2, 3, 4), (5, 6, 7, 8)],
             [(9, 10, 11, 12), (13, 14, 15, 16)]]
+
 
 @pytest.fixture
 def basic_grid(data_2x2):
@@ -25,22 +54,10 @@ def basic_grid(data_2x2):
     return grid
 
 
-def setup_module(module):
-    tornado.options.options.public_salt = 'public'
-    tornado.options.options.secret_salt = 'secret'
-    dbi.get_memcached().flush_all()
-
-
-def teardown_module(module):
-    dbi.get_memcached().flush_all()
-
-
-def setup_function(function):
-    _, tornado.options.options.db_file = tempfile.mkstemp()
-
-
-def teardown_function(function):
-    os.remove(tornado.options.options.db_file)
+@pytest.fixture(autouse=True)
+def set_salts(monkeypatch):
+    monkeypatch.setenv('HASHIDS_PUBLIC_SALT', 'public')
+    monkeypatch.setenv('HASHIDS_SECRET_SALT', 'secret')
 
 
 @pytest.mark.parametrize('secret, salt',
@@ -62,54 +79,27 @@ def test_decode_hash_id(secret, hash_id):
     assert dbi.decode_hash_id(hash_id, secret) == 1
 
 
-def test_sqlize_grid_spec(basic_grid):
-    data = basic_grid._construct_post_request(None, False)
-    entry = dbi.sqlize_grid_spec(data)
-
-    for k in dbi.JSONIZE_KEYS:
-        assert isinstance(entry[k], str)
-
-
-def test_desqlize_grid_entry(basic_grid):
-    data = basic_grid._construct_post_request(None, False)
-    entry = dbi.sqlize_grid_spec(data)
-    spec = dbi.desqlize_grid_entry(entry)
-
-    for k in dbi.JSONIZE_KEYS:
-        assert not isinstance(spec[k], str)
-
-
-@pytest.mark.parametrize('secret, table_name',
-    [(False, dbi.PUBLIC_TABLE),
-     (True, dbi.SECRET_TABLE)])
-def test_store_grid_entry(secret, table_name, basic_grid):
-    data = basic_grid._construct_post_request(None, secret)
-
-    hash_id = dbi.store_grid_entry(data)
-
-    table = dbi.get_table(secret)
-    entry = table.find_one(id=1)
-    del entry['id']
-
-    assert entry == dbi.sqlize_grid_spec(data)
-
 @pytest.mark.parametrize('secret', [False, True])
-def test_get_grid_entry(secret, basic_grid):
+def test_get_store_grid_entry(secret, basic_grid, session):
     data = basic_grid._construct_post_request(None, secret)
-    hash_id = dbi.store_grid_entry(data)
 
-    test_entry = dbi.get_grid_entry(hash_id, secret=secret)
-    ref_entry = dbi.get_table(secret).find_one(id=1)
-    assert ref_entry
+    # hack to normalize tuples to lists in the data dict so it matches JSON
+    comp_data = json.loads(json.dumps(data))
 
-    ref_entry = dbi.desqlize_grid_entry(ref_entry)
-    assert test_entry == ref_entry
+    hash_id = dbi.store_grid_entry(session, data)
+
+    grid_id = dbi.decode_hash_id(hash_id, secret)
+    assert grid_id == 1
+
+    grid_inst = dbi.get_grid_entry(session, hash_id, secret=secret)
+    assert grid_inst.id == 1
+    for key, value in comp_data.items():
+        assert getattr(grid_inst, key) == value
 
 
-def test_get_random_grid_entry(basic_grid):
+def test_get_random_grid_entry(basic_grid, session):
     data = basic_grid._construct_post_request(None, False)
-    hash_id = dbi.store_grid_entry(data)
-
-    test_id = dbi.get_random_hash_id()
+    hash_id = dbi.store_grid_entry(session, data)
+    test_id = dbi.get_random_hash_id(session)
 
     assert test_id == hash_id
