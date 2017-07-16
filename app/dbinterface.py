@@ -97,10 +97,11 @@ def store_grid_entry(session, grid_spec):
     new_grid = table(**grid_spec)
     session.add(new_grid)
     session.flush()
+    hash_id = encode_grid_id(new_grid.id, grid_spec['secret'])
 
-    llog.fields(grid_id=new_grid.id).debug('grid stored')
+    llog.fields(grid_id=new_grid.id, hash_id=hash_id).debug('grid stored')
 
-    return encode_grid_id(new_grid.id, grid_spec['secret'])
+    return hash_id
 
 
 def get_grid_entry(session, hash_id, secret=False):
