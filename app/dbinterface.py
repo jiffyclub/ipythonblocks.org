@@ -148,5 +148,6 @@ def get_random_hash_id(session):
     hash_id : str
 
     """
-    grid = session.query(models.PublicGrid).order_by(sa.func.random()).one()
+    grid = session.query(
+        models.PublicGrid).order_by(sa.func.random()).limit(1).one()
     return encode_grid_id(grid.id, secret=False)
