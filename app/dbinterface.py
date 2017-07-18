@@ -148,9 +148,5 @@ def get_random_hash_id(session):
     hash_id : str
 
     """
-    # this is okay right now because I know every ID up to the max is present
-    # in the database, but if I ever do cleanup and delete rows I'll need
-    # to switch to another strategy here.
-    max_id = session.query(sa.func.max(models.PublicGrid.id)).scalar()
-    random_grid_id = random.randint(1, max_id)
-    return encode_grid_id(random_grid_id, secret=False)
+    grid = session.query(models.PublicGrid).order_by(sa.func.random()).one()
+    return encode_grid_id(grid.id, secret=False)
