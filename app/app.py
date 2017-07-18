@@ -1,14 +1,17 @@
+import contextlib
 import json
 import logging
 import os
 
 import jsonschema
+import sqlalchemy as sa
 import tornado.ioloop
 import tornado.log
 import tornado.options
 import tornado.web
 
 from ipythonblocks import BlockGrid
+from sqlalchemy.orm import sessionmaker
 from twiggy import log
 
 # local imports
@@ -17,19 +20,13 @@ from . import postvalidate
 from .colorize import colorize
 from .twiggy_setup import twiggy_setup
 
-tornado.options.define('tornado_log_file',
-                       default='/var/log/ipborg/tornado.log',
-                       type=str)
-tornado.options.define('app_log_file',
-                       default='/var/log/ipborg/app.log',
-                       type=str)
-tornado.options.parse_command_line()
+tornado.options.define('port', default=80, type=int)
+tornado.options.define('db_url', type=str)
+log = log.name(__name__)
 
 
 def configure_tornado_logging():
-    fh = logging.handlers.RotatingFileHandler(
-        tornado.options.options.tornado_log_file,
-        maxBytes=2**29, backupCount=10)
+    fh = logging.StreamHandler()
 
     fmt = logging.Formatter('%(asctime)s:%(levelname)s:%(name)s:%(message)s')
     fh.setFormatter(fmt)
@@ -39,14 +36,6 @@ def configure_tornado_logging():
     logger.addHandler(fh)
 
     tornado.log.enable_pretty_logging(logger=logger)
-
-
-settings = {
-    'static_path': os.path.join(os.path.dirname(__file__), 'static'),
-    'template_path': os.path.join(os.path.dirname(__file__), 'templates'),
-    'debug': True,
-    'gzip': True
-}
 
 
 class MainHandler(tornado.web.StaticFileHandler):
@@ -59,7 +48,21 @@ class AboutHandler(tornado.web.StaticFileHandler):
         return 'about.html'
 
 
-class PostHandler(tornado.web.RequestHandler):
+class DBAccessHandler(tornado.web.RequestHandler):
+    @contextlib.contextmanager
+    def session_context(self):
+        session = self.application.session_factory()
+        try:
+            yield session
+            session.commit()
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+
+class PostHandler(DBAccessHandler):
     def post(self):
         try:
             req_data = json.loads(self.request.body)
@@ -73,7 +76,8 @@ class PostHandler(tornado.web.RequestHandler):
             log.debug('Post JSON validation failed.')
             raise tornado.web.HTTPError(400, 'Post JSON validation failed.')
 
-        hash_id = dbi.store_grid_entry(req_data)
+        with self.session_context() as session:
+            hash_id = dbi.store_grid_entry(session, req_data)
 
         if req_data['secret']:
             url = 'http://ipythonblocks.org/secret/{}'
@@ -85,25 +89,29 @@ class PostHandler(tornado.web.RequestHandler):
         self.write({'url': url})
 
 
-class GetGridSpecHandler(tornado.web.RequestHandler):
+class GetGridSpecHandler(DBAccessHandler):
     def initialize(self, secret):
         self.secret = secret
 
     def get(self, hash_id):
-        grid_spec = dbi.get_grid_entry(hash_id, self.secret)
-        if not grid_spec:
-            raise tornado.web.HTTPError(404, 'Grid not found.')
+        with self.session_context() as session:
+            grid_spec = dbi.get_grid_entry(session, hash_id, self.secret)
 
-        self.write(grid_spec['grid_data'])
+            if not grid_spec:
+                raise tornado.web.HTTPError(404, 'Grid not found.')
+
+            self.write(grid_spec.grid_data)
 
 
-class RandomHandler(tornado.web.RequestHandler):
+class RandomHandler(DBAccessHandler):
     def get(self):
-        hash_id = dbi.get_random_hash_id()
+        with self.session_context() as session:
+            hash_id = dbi.get_random_hash_id(session)
+        log.info('redirecting to url /{0}', hash_id)
         self.redirect('/' + hash_id, status=303)
 
 
-class ErrorHandler(tornado.web.RequestHandler):
+class ErrorHandler(DBAccessHandler):
     def get(self):
         self.send_error(404)
 
@@ -111,7 +119,7 @@ class ErrorHandler(tornado.web.RequestHandler):
         if status_code == 404:
             self.render('404.html')
         else:
-            super(ErrorHandler, self).send_error(status_code, **kwargs)
+            super().send_error(status_code, **kwargs)
 
 
 class RenderGridHandler(ErrorHandler):
@@ -120,38 +128,59 @@ class RenderGridHandler(ErrorHandler):
 
     @tornado.web.removeslash
     def get(self, hash_id):
-        grid_spec = dbi.get_grid_entry(hash_id, secret=self.secret)
-        if not grid_spec:
-            self.send_error(404)
-            return
+        with self.session_context() as session:
+            grid_spec = dbi.get_grid_entry(session, hash_id, secret=self.secret)
 
-        gd = grid_spec['grid_data']
-        grid = BlockGrid(gd['width'], gd['height'], lines_on=gd['lines_on'])
-        grid._load_simple_grid(gd['blocks'])
-        grid_html = grid._repr_html_()
+            if not grid_spec:
+                self.send_error(404)
+                return
 
-        code_cells = grid_spec['code_cells'] or []
-        code_cells = [colorize(c) for c in code_cells]
+            gd = grid_spec.grid_data
+            grid = BlockGrid(gd['width'], gd['height'], lines_on=gd['lines_on'])
+            grid._load_simple_grid(gd['blocks'])
+            grid_html = grid._repr_html_()
 
-        self.render('grid.html', grid_html=grid_html, code_cells=code_cells)
+            code_cells = grid_spec.code_cells or []
+            code_cells = [colorize(c) for c in code_cells]
+
+            self.render('grid.html', grid_html=grid_html, code_cells=code_cells)
 
 
-application = tornado.web.Application([
-    (r'/()', MainHandler, {'path': settings['template_path']}),
-    (r'/(about)', AboutHandler, {'path': settings['template_path']}),
-    (r'/random', RandomHandler),
-    (r'/post', PostHandler),
-    (r'/get/(\w{6}\w*)', GetGridSpecHandler, {'secret': False}),
-    (r'/get/secret/(\w{6}\w*)', GetGridSpecHandler, {'secret': True}),
-    (r'/(\w{6}\w*)/*', RenderGridHandler, {'secret': False}),
-    (r'/secret/(\w{6}\w*)/*', RenderGridHandler, {'secret': True}),
-    (r'/.*', ErrorHandler)
-], **settings)
+class AppWithSession(tornado.web.Application):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.engine = sa.create_engine(tornado.options.options.db_url)
+        self.session_factory = sessionmaker(bind=self.engine)
+
+
+SETTINGS = {
+    'static_path': os.path.join(os.path.dirname(__file__), 'static'),
+    'template_path': os.path.join(os.path.dirname(__file__), 'templates'),
+    'debug': True,
+    'gzip': True
+}
+
+
+def make_application():
+    return AppWithSession(handlers=[
+        (r'/()', MainHandler, {'path': SETTINGS['template_path']}),
+        (r'/(about)', AboutHandler, {'path': SETTINGS['template_path']}),
+        (r'/random', RandomHandler),
+        (r'/post', PostHandler),
+        (r'/get/(\w{6}\w*)', GetGridSpecHandler, {'secret': False}),
+        (r'/get/secret/(\w{6}\w*)', GetGridSpecHandler, {'secret': True}),
+        (r'/(\w{6}\w*)/*', RenderGridHandler, {'secret': False}),
+        (r'/secret/(\w{6}\w*)/*', RenderGridHandler, {'secret': True}),
+        (r'/.*', ErrorHandler)
+    ], **SETTINGS)
 
 
 if __name__ == '__main__':
+    tornado.options.parse_command_line()
     configure_tornado_logging()
     twiggy_setup()
 
-    application.listen(8877)
+    log.fields(port=tornado.options.options.port).info('starting server')
+    application = make_application()
+    application.listen(tornado.options.options.port)
     tornado.ioloop.IOLoop.instance().start()

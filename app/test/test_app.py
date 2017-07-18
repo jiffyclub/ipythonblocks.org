@@ -2,32 +2,31 @@ import json
 import os
 import tempfile
 
-import dataset
+import pytest
+import sqlalchemy as sa
+import testing.postgresql
 import tornado.options
 import tornado.testing
-
-import mock
+from sqlalchemy.orm import sessionmaker
 
 from .. import app
 from .. import dbinterface as dbi
+from .. import models
 
 
 def setup_module(module):
-    tornado.options.options.public_salt = 'public'
-    tornado.options.options.secret_salt = 'secret'
-    dbi.get_memcached().flush_all()
+    module.PG_FACTORY = testing.postgresql.PostgresqlFactory(
+        cache_initialized_db=True)
 
 
 def teardown_module(module):
-    dbi.get_memcached().flush_all()
+    module.PG_FACTORY.clear_cache()
 
 
-def setup_function(function):
-    _, tornado.options.options.db_file = tempfile.mkstemp()
-
-
-def teardown_function(function):
-    os.remove(tornado.options.options.db_file)
+@pytest.fixture(autouse=True)
+def set_salts(monkeypatch):
+    monkeypatch.setenv('HASHIDS_PUBLIC_SALT', 'public')
+    monkeypatch.setenv('HASHIDS_SECRET_SALT', 'secret')
 
 
 def data_2x2():
@@ -53,24 +52,30 @@ def request():
 
 class UtilBase(tornado.testing.AsyncHTTPTestCase):
     def setup_method(self, method):
-        _, tornado.options.options.db_file = tempfile.mkstemp()
+        self.postgresql = PG_FACTORY()
+        self.engine = sa.create_engine(self.postgresql.url())
+        models.Base.metadata.create_all(bind=self.engine)
+        self.Session = sessionmaker(bind=self.engine)
+        self.session = self.Session()
+        tornado.options.options.db_url = self.postgresql.url()
 
     def teardown_method(self, method):
-        os.remove(tornado.options.options.db_file)
+        self.session.close()
+        self.Session.close_all()
+        self.engine.dispose()
+        self.postgresql.stop()
 
     def get_app(self):
-        return app.application
+        return app.make_application()
 
     def get_response(self, body=None):
-        self.http_client.fetch(
-            self.get_url(self.app_url), self.stop,
-            method=self.method, body=body)
-        return self.wait()
+        return self.fetch(self.app_url, method=self.method, body=body)
 
     def save_grid(self, secret):
         req = request()
         req['secret'] = secret
-        hash_id = dbi.store_grid_entry(req)
+        hash_id = dbi.store_grid_entry(self.session, req)
+        self.session.commit()
         return hash_id
 
 
@@ -115,9 +120,13 @@ class TestPostGrid(UtilBase):
 
         body = json.loads(response.body)
         hash_id = body['url'].split('/')[-1]
-        grid_spec = dbi.get_grid_entry(hash_id)
-        del grid_spec['id']
-        assert grid_spec == json.loads(json.dumps(req))
+        grid_spec = dbi.get_grid_entry(self.session, hash_id)
+        assert grid_spec.id == 1
+
+        comp_data= json.loads(json.dumps(req))
+
+        for key, value in comp_data.items():
+            assert getattr(grid_spec, key) == value
 
 
 class TestGetGrid(UtilBase):
@@ -175,8 +184,8 @@ class TestRenderGrid(UtilBase):
 
         response = self.get_response()
         assert response.code == 200
-        assert '<table' in response.body
-        assert 'asdf' in response.body
+        assert b'<table' in response.body
+        assert b'asdf' in response.body
 
     def test_render_secret(self):
         hash_id = self.save_grid(True)
@@ -184,5 +193,5 @@ class TestRenderGrid(UtilBase):
 
         response = self.get_response()
         assert response.code == 200
-        assert '<table' in response.body
-        assert 'asdf' in response.body
+        assert b'<table' in response.body
+        assert b'asdf' in response.body
