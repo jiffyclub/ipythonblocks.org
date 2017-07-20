@@ -1,4 +1,5 @@
 """Script for migrating ipythonblocks grid data from SQLite to Postgres"""
+import contextlib
 import json
 import os
 from pathlib import Path
@@ -56,16 +57,42 @@ def sqlite_table_to_sa_rows(table_name, sa_cls):
         yield sqlite_row_to_sa_row(row, sa_cls)
 
 
+@contextlib.contextmanager
+def session_context():
+    session = SESSION()
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
 def migrate():
     """
     Trigger the reading from SQLite, transformation of JSON data,
     and writing to Postgres.
 
     """
-    session = SESSION()
-    session.add_all(sqlite_table_to_sa_rows('public_grids', models.PublicGrid))
-    session.add_all(sqlite_table_to_sa_rows('secret_grids', models.SecretGrid))
-    session.commit()
+    with session_context() as session:
+        session.add_all(sqlite_table_to_sa_rows('public_grids', models.PublicGrid))
+        session.add_all(sqlite_table_to_sa_rows('secret_grids', models.SecretGrid))
+
+        # Because all the grids added so far already had IDs, the sequences
+        # backing the id columns in the grid tables haven't been advanced
+        # at all. When trying to add a new table the sequence would provide
+        # a key of 1, which would then collide with the existing grids.
+        # We need to manually set the sequences behind the table primary keys
+        # so that when new grids are added with no IDs the automatically
+        # generated IDs are actually available.
+        max_public_id = session.query(sa.func.max(models.PublicGrid.id)).scalar()
+        max_secret_id = session.query(sa.func.max(models.SecretGrid.id)).scalar()
+
+        session.execute(sa.text(
+            f'select setval(\'public_grids_id_seq\', {max_public_id})'))
+        session.execute(sa.text(
+            f'select setval(\'secret_grids_id_seq\', {max_secret_id})'))
 
 
 if __name__ == '__main__':
