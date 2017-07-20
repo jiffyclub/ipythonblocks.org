@@ -80,9 +80,9 @@ class PostHandler(DBAccessHandler):
             hash_id = dbi.store_grid_entry(session, req_data)
 
         if req_data['secret']:
-            url = 'http://ipythonblocks.org/secret/{}'
+            url = 'http://www.ipythonblocks.org/secret/{}'
         else:
-            url = 'http://ipythonblocks.org/{}'
+            url = 'http://www.ipythonblocks.org/{}'
 
         url = url.format(hash_id)
 
