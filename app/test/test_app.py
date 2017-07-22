@@ -18,7 +18,6 @@ def setup_module(module):
     module.PG_FACTORY = testing.postgresql.PostgresqlFactory(
         cache_initialized_db=True)
 
-
 def teardown_module(module):
     module.PG_FACTORY.clear_cache()
 
@@ -99,7 +98,7 @@ class TestPostGrid(UtilBase):
         assert 'application/json' in response.headers['Content-Type']
 
         body = json.loads(response.body)
-        assert body['url'] == 'http://ipythonblocks.org/bizkiL'
+        assert body['url'] == 'http://www.ipythonblocks.org/bizkiL'
 
     def test_returns_url_secret(self):
         req = request()
@@ -110,7 +109,7 @@ class TestPostGrid(UtilBase):
         assert 'application/json' in response.headers['Content-Type']
 
         body = json.loads(response.body)
-        assert body['url'] == 'http://ipythonblocks.org/secret/MiXoi4'
+        assert body['url'] == 'http://www.ipythonblocks.org/secret/MiXoi4'
 
     def test_stores_data(self):
         req = request()
